@@ -16,12 +16,23 @@ const TidyTree = ({ data }) => {
   useEffect(() => {
     if (!data) return;
 
-    // Clear previous SVG before rendering a new one
-    d3.select(containerRef.current).select("svg").remove();
+    // Check if SVG already exists, otherwise create it
+    let svg = d3.select(containerRef.current).select("svg");
+
+    if (svg.empty()) {
+      svg = d3
+        .select(containerRef.current) // Attach to the div
+        .append("svg")
+        .attr("width", width)
+        .attr("height", 0) // Initial height will be updated in update()
+        .attr("viewBox", [0, 0, width, 0])
+        .style("max-width", "100%")
+        .style("height", "auto")
+        .style("font", "10px sans-serif")
+        .style("user-select", "none");
+    }
 
     // Specify the charts’ dimensions. The height is variable, depending on the layout.
-    // const width = 928;
-    //const width = windowWidth;
     const marginTop = 10;
     const marginRight = 10;
     const marginBottom = 10;
@@ -38,27 +49,13 @@ const TidyTree = ({ data }) => {
     const tree = d3.tree().nodeSize([dx, dy]);
     const diagonal = d3.linkHorizontal().x((d) => d.y).y((d) => d.x);
 
-    
-    // Create the SVG container, a layer for the links and a layer for the nodes.
-    const svg = d3
-      .select(containerRef.current) // Attach to the div
-      .append("svg")
-      .attr("width", width)
-      .attr("height", dx)
-      .attr("viewBox", [-marginLeft, -marginTop, width, dx])
-      .style("max-width", "100%")
-      .style("height", "auto")
-      .style("font", "10px sans-serif")
-      .style("user-select", "none");
-
-    const gLink = svg.append("g")
-      .attr("fill", "none")
-    //   .attr("stroke", "#555")
+    // Create the groups for links and nodes if not already present
+    const gLink = svg.selectAll("g.links").data([0]).enter().append("g").attr("class", "links").attr("fill", "none")
       .attr("stroke", "#2593B8")
       .attr("stroke-opacity", 0.4)
       .attr("stroke-width", 1.5);
 
-    const gNode = svg.append("g")
+    const gNode = svg.selectAll("g.nodes").data([0]).enter().append("g").attr("class", "nodes")
       .attr("cursor", "pointer")
       .attr("pointer-events", "all");
 
@@ -102,32 +99,16 @@ const TidyTree = ({ data }) => {
 
       nodeEnter.append("circle")
         .attr("r", 5)
-        // .attr("fill", (d) => (d._children ? "#555" : "#999"))
-        // .attr("fill", "#F3F3FF") // Fill the circle with white
-        // .attr("stroke", "#2593B8") // Add a blue outline
-        // .attr("stroke-width", 1.5);
-        .attr("class", "node-circle"); 
 
       nodeEnter.append("text")
         .attr("dy", "0.31em")
-        //.attr("x", (d) => (d._children ? -6 : 6))
-        //.attr("text-anchor", (d) => (d._children ? "end" : "start"))
         .attr("x", 6) // Always position the text 6 units to the right of the circle
         .attr("text-anchor", "start") // Always anchor the text to the start (right)
         .text((d) => d.data.name)
-        .attr("stroke-linejoin", "round")
-        .attr("paint-order", "stroke")
-        // .style("font-size", "12px")
-        // .style("fill", "#F4F4F4")
-        // .style("background-color", "#444")
-        // .style("text-shadow", "0 1px 4px black")
-        // .style("-webkit-transition", "fill, font-size 0.5s");
-        .attr("class", "node-text");
 
         // Transition nodes to their new position.
       node.merge(nodeEnter)
         .transition(transition)
-        //.attr("transform", (d) => `translate(${d.y},${d.x})`)
         .attr("transform", (d) => {
           // Adjust the x for second layer (minister nodes)
           let adjustedX = d.y;
@@ -138,7 +119,7 @@ const TidyTree = ({ data }) => {
           return `translate(${adjustedX},${d.x})`;
         })
         .attr("fill-opacity", 1)
-        .attr("stroke-opacity", 1);
+        .attr("stroke-opacity", 1)
 
         // Transition exiting nodes to the parent's new position.
       node.exit()
