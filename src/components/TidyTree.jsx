@@ -5,6 +5,7 @@ import "./TidyTree.css";
 const TidyTree = ({ data }) => {
   const containerRef = useRef(null);
   const [width, setWidth] = useState(window.innerWidth);
+  let ministersExpanded = false;
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth); // Update width on window resize
@@ -60,7 +61,8 @@ const TidyTree = ({ data }) => {
       .attr("pointer-events", "all");
 
     function update(event, source) {
-      const duration = event?.altKey ? 2500 : 250; // hold the alt key to slow down the transition
+      //const duration = event?.altKey ? 2500 : 250; // hold the alt key to slow down the transition
+      const duration = 500;
       const nodes = root.descendants().reverse();
       const links = root.links();
 
@@ -111,6 +113,18 @@ const TidyTree = ({ data }) => {
             highlightNodes(d);
             update(event, d);
           }
+
+          // Set a flag for ministers to shift position when expanded
+          if (d.depth === 1) {
+            if (isExpanding) {
+              ministersExpanded = true;  // Move ministers to the left
+            } else {
+              // Check if all minister nodes are collapsed
+              const allCollapsed = root.children.every(min => !min.children);
+              ministersExpanded = !allCollapsed;  // Reset to false if all are collapsed
+            }
+            update(event, d);
+          }
           
         });
 
@@ -131,7 +145,9 @@ const TidyTree = ({ data }) => {
           let adjustedX = d.y;
           if (d.depth === 1) {
             // For depth 1 nodes (minister nodes), center them horizontally
-            adjustedX = width / 2;
+            //adjustedX = width / 2;
+            // If ministers are expanded, shift them left to 1/4 of the width
+            adjustedX = ministersExpanded ? width / 4 : width / 2;
           }
           return `translate(${adjustedX},${d.x})`;
         })
@@ -164,13 +180,17 @@ const TidyTree = ({ data }) => {
         //.attr("d", diagonal);
         .attr("d", (d) => {
           // Adjust the link paths for the second layer nodes (minister nodes)
-          const adjustedSourceY = d.source.depth === 1 ? width / 2 : d.source.y;
-          const adjustedTargetY = d.target.depth === 1 ? width / 2 : d.target.y;
+          // const adjustedSourceY = d.source.depth === 1 ? width / 2 : d.source.y;
+          // const adjustedTargetY = d.target.depth === 1 ? width / 2 : d.target.y;
     
-          const sourcePosition = { x: d.source.x, y: adjustedSourceY };
-          const targetPosition = { x: d.target.x, y: adjustedTargetY };
+          // const sourcePosition = { x: d.source.x, y: adjustedSourceY };
+          // const targetPosition = { x: d.target.x, y: adjustedTargetY };
     
-          return diagonal({ source: sourcePosition, target: targetPosition });
+          // return diagonal({ source: sourcePosition, target: targetPosition });
+          const adjustedSourceY = d.source.depth === 1 ? (ministersExpanded ? width / 4 : width / 2) : d.source.y;
+          const adjustedTargetY = d.target.depth === 1 ? (ministersExpanded ? width / 4 : width / 2) : d.target.y;
+
+          return diagonal({ source: { x: d.source.x, y: adjustedSourceY }, target: { x: d.target.x, y: adjustedTargetY } });
         });
 
         // Transition existing nodes to the parent's new position.
