@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Neo4j from "neo4j-driver";
 import TidyTree from "./components/TidyTree"; // Import the new component
+import HorizontalTimeline from "./components/HorizontalTimeline";
+import EventSlider from "./components/EventSlider";
 
 // Neo4j connection settings
 const uri = "bolt://localhost:7687"; // Change this to match your setup
@@ -49,9 +51,18 @@ const App = () => {
     fetchData().then(setTreeData);
   }, []);
 
+  // Example timeline data, replace with dynamic data if needed
+  const timelineData = [
+    { date: "2010", event: "Event 1" },
+    { date: "2015", event: "Event 2" },
+    { date: "2020", event: "Event 3" },
+  ];
+
   return (
     <div>
-      <h2>Government Structure</h2>
+      <h2>Organization Chart</h2>
+      {/* <HorizontalTimeline data={timelineData} /> */}
+      <EventSlider data={timelineData} />
       {treeData ? <TidyTree data={treeData} containerId="tree1" /> : <p>Loading...</p>}
     </div>
   );
