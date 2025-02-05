@@ -90,11 +90,28 @@ const TidyTree = ({ data }) => {
       const nodeEnter = node.enter()
         .append("g")
         .attr("transform", (d) => `translate(${source.y0},${source.x0})`)
+        .attr("data-id", (d) => d.id)
         .attr("fill-opacity", 0)
         .attr("stroke-opacity", 0)
+        // .on("click", (event, d) => {
+        //   d.children = d.children ? null : d._children;
+        //   update(event, d);
+        // })
         .on("click", (event, d) => {
-          d.children = d.children ? null : d._children;
+          const isExpanding = !d.children; // Check if the node is expanding
+        
+          d.children = isExpanding ? d._children : null;
           update(event, d);
+        
+          // Apply or remove highlight
+          d3.selectAll(".nodes circle,.nodes text").classed("highlight", false); // Remove highlight from all
+          //d3.selectAll(".link").classed("highlight", false);
+        
+          if (isExpanding) {
+            highlightNodes(d);
+            update(event, d);
+          }
+          
         });
 
       nodeEnter.append("circle")
@@ -170,6 +187,18 @@ const TidyTree = ({ data }) => {
         d.x0 = d.x;
         d.y0 = d.y;
       });
+    }
+
+    function highlightNodes(node) {
+      // Highlight the clicked node
+      d3.select(`[data-id='${node.id}']`)
+      .selectAll("circle, text") // Target the circle inside the node
+      .classed("highlight", true);
+    
+      // Highlight all children recursively
+      if (node.children) {
+        node.children.forEach((child) => highlightNodes(child));
+      }
     }
 
     // Do the first update to the initial configuration of the tree — where a number of nodes
