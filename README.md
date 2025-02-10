@@ -1,8 +1,18 @@
-# React + Vite
+# Setup
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Set your Neo4j database variables in App.jsx:
 
-Currently, two official plugins are available:
+```bash
+// Neo4j connection settings
+const uri = "bolt://localhost:7687"; // Change this to match your setup
+const user = "db_username";
+const password = "db_password";
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+# Run
+
+To run the application:
+
+```bash
+npm run dev
+```

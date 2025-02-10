@@ -1,11 +1,22 @@
 import * as React from "react";
 import { Box, Slider, Typography } from "@mui/material";
 
-export default function EventSlider({ data }) {
-  const [selectedValue, setSelectedValue] = React.useState(0);
+export default function EventSlider({ data, onSelectDate }) {
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+
+  React.useEffect(() => {
+    if (data.length > 0) {
+      const latestIndex = data.length - 1;
+      setSelectedIndex(latestIndex);
+      onSelectDate(data[latestIndex].date);
+      console.log("EventSlider.jsx: Initial date set to:", data[latestIndex].date);
+    }
+  }, [data]);
+  
 
   if (!data || data.length === 0) {
-    return <Typography>No events to display</Typography>;
+    return <Typography>No dates to display</Typography>;
   }
 
   // Spread values equally between 0 and 100
@@ -16,7 +27,12 @@ export default function EventSlider({ data }) {
   }));
 
   const handleChange = (event, newValue) => {
-    setSelectedValue(newValue);
+    const newIndex = Math.round(newValue / stepSize);
+    if (newIndex !== selectedIndex) {
+      setSelectedIndex(newIndex);
+      onSelectDate(data[newIndex].date);
+      console.log("EventSlider.jsx: Date changed to:", data[newIndex].date);
+    }
   };
 
   return (
@@ -26,7 +42,7 @@ export default function EventSlider({ data }) {
       </Typography> */}
 
       <Slider
-        value={selectedValue}
+        value={selectedIndex * stepSize}
         onChange={handleChange}
         step={null} // Only allow selecting predefined dates
         marks={marks}
@@ -70,13 +86,13 @@ export default function EventSlider({ data }) {
             height: 4, // Adjust line thickness
             backgroundColor: "white", // Lighter color for the unselected track
             //opacity: 1
-        },
+          },
         }}
       />
-            
+
       {/* <Typography variant="body1" sx={{ marginBottom: 2 }}> */}
-        {/* Selected Date:{" "} */}
-        {/* {marks.find((mark) => mark.value === selectedValue)?.label}
+      {/* Selected Date:{" "} */}
+      {/* {marks.find((mark) => mark.value === selectedValue)?.label}
       </Typography> */}
     </Box>
   );
