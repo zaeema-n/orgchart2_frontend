@@ -227,9 +227,11 @@ const TidyTree = ({ data }) => {
     root.y0 = 0;
     root.descendants().forEach((d, i) => {
       d.id = i;
-      d._children = d.children;
-      if (d.depth > 1) {  // Only collapse nodes deeper than minister level (depth > 1)
-        d.children = null;
+      if (d.depth > 1) {  // For nodes deeper than minister level
+        d._children = d.children;  // Store the children
+        d.children = null;         // Collapse the node
+      } else {
+        d._children = null;        // No need to store children for root and ministers
       }
     });
 
