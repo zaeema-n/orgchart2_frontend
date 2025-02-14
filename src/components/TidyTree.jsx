@@ -8,15 +8,16 @@ const TidyTree = ({ data }) => {
   let ministersExpanded = false;
 
   useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
+    const handleResize = () => setWidth(window.innerWidth); // Update width on window resize
     window.addEventListener("resize", handleResize);
+
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
     if (!data) return;
 
-    // Clear existing SVG content when new data arrives
+    // Clear existing SVG when data changes
     d3.select(containerRef.current).selectAll("svg").remove();
 
     // Create new SVG
@@ -40,38 +41,35 @@ const TidyTree = ({ data }) => {
     // Rows are separated by dx pixels, columns by dy pixels. These names can be counter-intuitive
     // (dx is a height, and dy a width). This because the tree must be viewed with the root at the
     // "bottom", in the data domain. The width of a column is based on the tree's height.
-    const initialRoot = d3.hierarchy(data);
+    const root = d3.hierarchy(data);
     const dx = 20;
-    const dy = (width - marginRight - marginLeft) / (1 + initialRoot.height);
+    const dy = (width - marginRight - marginLeft) / (1 + root.height);
 
     // Define the tree layout and the shape for links.
     const tree = d3.tree().nodeSize([dx, dy]);
     const diagonal = d3.linkHorizontal().x((d) => d.y).y((d) => d.x);
 
-    // Create the groups for links and nodes
-    const gLink = svg.append("g")
-      .attr("class", "links")
-      .attr("fill", "none")
+    // Create the groups for links and nodes if not already present
+    const gLink = svg.selectAll("g.links").data([0]).enter().append("g").attr("class", "links").attr("fill", "none")
       .attr("stroke", "#2593B8")
       .attr("stroke-opacity", 0.4)
       .attr("stroke-width", 1.5);
 
-    const gNode = svg.append("g")
-      .attr("class", "nodes")
+    const gNode = svg.selectAll("g.nodes").data([0]).enter().append("g").attr("class", "nodes")
       .attr("cursor", "pointer")
       .attr("pointer-events", "all");
 
     function update(event, source) {
       //const duration = event?.altKey ? 2500 : 250; // hold the alt key to slow down the transition
       const duration = 500;
-      const nodes = initialRoot.descendants().reverse();
-      const links = initialRoot.links();
+      const nodes = root.descendants().reverse();
+      const links = root.links();
 
       // Compute the new tree layout.
-      tree(initialRoot);
+      tree(root);
 
-      let left = initialRoot, right = initialRoot;
-      initialRoot.eachBefore((node) => {
+      let left = root, right = root;
+      root.eachBefore((node) => {
         if (node.x < left.x) left = node;
         if (node.x > right.x) right = node;
       });
@@ -121,7 +119,7 @@ const TidyTree = ({ data }) => {
               ministersExpanded = true;  // Move ministers to the left
             } else {
               // Check if all minister nodes are collapsed
-              const allCollapsed = initialRoot.children.every(min => !min.children);
+              const allCollapsed = root.children.every(min => !min.children);
               ministersExpanded = !allCollapsed;  // Reset to false if all are collapsed
             }
             update(event, d);
@@ -203,7 +201,7 @@ const TidyTree = ({ data }) => {
         });
 
         // Stash the old positions for transition.
-      initialRoot.eachBefore((d) => {
+      root.eachBefore((d) => {
         d.x0 = d.x;
         d.y0 = d.y;
       });
@@ -221,31 +219,20 @@ const TidyTree = ({ data }) => {
       }
     }
 
-    // Initialize the root with the new data
-    const root = d3.hierarchy(data);
+    // Do the first update to the initial configuration of the tree — where a number of nodes
+    // are open (arbitrarily selected as the root).
     root.x0 = dy / 2;
     root.y0 = 0;
     root.descendants().forEach((d, i) => {
       d.id = i;
-      if (d.depth > 1) {  // For nodes deeper than minister level
-        d._children = d.children;  // Store the children
-        d.children = null;         // Collapse the node
-      } else {
-        d._children = null;        // No need to store children for root and ministers
-      }
+      d._children = d.children;
+      if (d.depth > 0) d.children = null;
     });
 
-    // Set ministers as expanded since they're visible by default
-    ministersExpanded = true;
-
     update(null, root);
-  }, [data, width]); // Re-run effect when data or width changes
+  }, [data, width]); // Re-run the effect when windowWidth changes
 
-  useEffect(() => {
-    console.log('TidyTree received new data:', data);
-  }, [data]);
-
-  return <div ref={containerRef}></div>;
+  return <div ref={containerRef}></div>; // Render a div instead of returning SVG
 };
 
 export default TidyTree;
