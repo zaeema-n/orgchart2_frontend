@@ -76,7 +76,6 @@ const fetchDataForAllDates = async (dates) => {
 
 const App = () => {
   const [treeData, setTreeData] = useState(null);
-  const [ istreeDataLoading, setTreeDataLoading ] = useState(true);
   const [gazetteDates, setGazetteDates] = useState([]);
   const [allData, setAllData] = useState({}); // Store all data for each date
 
