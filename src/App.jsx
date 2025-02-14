@@ -4,9 +4,17 @@ import TidyTree from "./components/TidyTree"; // Import the new component
 import EventSlider from "./components/EventSlider";
 
 // Neo4j connection settings
-const uri = "bolt://localhost:7687"; // Change this to match your setup
-const user = "neo4j";
-const password = "orgchart";
+const uri = import.meta.env.VITE_NEO4J_ORGCHART_DB_URI
+const user = import.meta.env.VITE_NEO4J_ORGCHART_USERNAME
+const password = import.meta.env.VITE_NEO4J_ORGCHART_PASSWORD
+
+// Validate Neo4j connection settings
+if (!uri || !user || !password) {
+  throw new Error(
+    'Missing Neo4j connection settings. Please ensure VITE_NEO4J_ORGCHART_DB_URI, ' +
+    'VITE_NEO4J_ORGCHART_USERNAME, and VITE_NEO4J_ORGCHART_PASSWORD environment variables are set.'
+  );
+}
 
 const driver = Neo4j.driver(uri, Neo4j.auth.basic(user, password));
 
