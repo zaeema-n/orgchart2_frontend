@@ -228,8 +228,13 @@ const TidyTree = ({ data }) => {
     root.descendants().forEach((d, i) => {
       d.id = i;
       d._children = d.children;
-      if (d.depth > 1) d.children = null; // Collapse nodes beyond the first level
+      if (d.depth > 1) {  // Only collapse nodes deeper than minister level (depth > 1)
+        d.children = null;
+      }
     });
+
+    // Set ministers as expanded since they're visible by default
+    ministersExpanded = true;
 
     update(null, root);
   }, [data, width]); // Re-run effect when data or width changes
