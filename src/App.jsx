@@ -110,13 +110,21 @@ const App = () => {
   const handleDateChange = async (date) => {
     setIsTreeDataLoading(true);
     if (!allData[date]) {
+      console.log(`App.jsx: Fetching data for ${date}`);
+      console.log("allData");
+      console.log(allData);
       const newData = await fetchDataForAllDates([date]);
+      console.log("newData");
+      console.log(newData);
       setAllData(prevData => ({
         ...prevData,
         [date]: newData[date]
       }));
       setTreeData(newData[date]);
     } else {
+      console.log("allData[date]");
+      console.log(date);
+      console.log(allData[date]);
       setTreeData(allData[date]);
     }
     setIsTreeDataLoading(false);
