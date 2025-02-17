@@ -17,23 +17,22 @@ const TidyTree = ({ data }) => {
   useEffect(() => {
     if (!data) return;
 
-    // Check if SVG already exists, otherwise create it
-    let svg = d3.select(containerRef.current).select("svg");
+    // Clear existing SVG when data changes
+    d3.select(containerRef.current).selectAll("svg").remove();
 
-    if (svg.empty()) {
-      svg = d3
-        .select(containerRef.current) // Attach to the div
-        .append("svg")
-        .attr("width", width)
-        .attr("height", 0) // Initial height will be updated in update()
-        .attr("viewBox", [0, 0, width, 0])
-        .style("max-width", "100%")
-        .style("height", "auto")
-        .style("font", "10px sans-serif")
-        .style("user-select", "none");
-    }
+    // Create new SVG
+    const svg = d3
+      .select(containerRef.current)
+      .append("svg")
+      .attr("width", width)
+      .attr("height", 0)
+      .attr("viewBox", [0, 0, width, 0])
+      .style("max-width", "100%")
+      .style("height", "auto")
+      .style("font", "10px sans-serif")
+      .style("user-select", "none");
 
-    // Specify the charts’ dimensions. The height is variable, depending on the layout.
+    // Specify the charts' dimensions. The height is variable, depending on the layout.
     const marginTop = 10;
     const marginRight = 10;
     const marginBottom = 10;
@@ -41,7 +40,7 @@ const TidyTree = ({ data }) => {
 
     // Rows are separated by dx pixels, columns by dy pixels. These names can be counter-intuitive
     // (dx is a height, and dy a width). This because the tree must be viewed with the root at the
-    // “bottom”, in the data domain. The width of a column is based on the tree’s height.
+    // "bottom", in the data domain. The width of a column is based on the tree's height.
     const root = d3.hierarchy(data);
     const dx = 20;
     const dy = (width - marginRight - marginLeft) / (1 + root.height);

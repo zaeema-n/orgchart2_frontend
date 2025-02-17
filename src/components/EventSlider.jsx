@@ -4,17 +4,6 @@ import { Box, Slider, Typography } from "@mui/material";
 export default function EventSlider({ data, onSelectDate }) {
   const [selectedIndex, setSelectedIndex] = React.useState(0);
 
-
-  React.useEffect(() => {
-    if (data.length > 0) {
-      const latestIndex = data.length - 1;
-      setSelectedIndex(latestIndex);
-      onSelectDate(data[latestIndex].date);
-      console.log("EventSlider.jsx: Initial date set to:", data[latestIndex].date);
-    }
-  }, [data]);
-  
-
   if (!data || data.length === 0) {
     return <Typography>No dates to display</Typography>;
   }
@@ -31,7 +20,8 @@ export default function EventSlider({ data, onSelectDate }) {
     if (newIndex !== selectedIndex) {
       setSelectedIndex(newIndex);
       onSelectDate(data[newIndex].date);
-      console.log("EventSlider.jsx: Date changed to:", data[newIndex].date);
+      console.log("EventSlider.jsx: data[newIndex].date:", data[newIndex].date);
+      console.log("EventSlider.jsx: Data:", data[newIndex]);
     }
   };
 
