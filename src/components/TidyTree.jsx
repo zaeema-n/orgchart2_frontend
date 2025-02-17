@@ -175,6 +175,7 @@ const TidyTree = ({ data }) => {
 
         // Transition links to their new position.
       link.merge(linkEnter)
+        .transition(transition)
         //.attr("d", diagonal);
         .attr("d", (d) => {
           // Adjust the link paths for the second layer nodes (minister nodes)
