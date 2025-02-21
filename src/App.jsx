@@ -1,23 +1,7 @@
 import React, { useEffect, useState } from "react";
-import Neo4j from "neo4j-driver";
 import TidyTree from "./components/TidyTree"; // Import the new component
 import EventSlider from "./components/EventSlider";
 import { ErrorBoundary } from "react-error-boundary";
-
-// Neo4j connection settings
-const uri = import.meta.env.VITE_NEO4J_ORGCHART_DB_URI
-const user = import.meta.env.VITE_NEO4J_ORGCHART_USERNAME
-const password = import.meta.env.VITE_NEO4J_ORGCHART_PASSWORD
-
-// Validate Neo4j connection settings
-if (!uri || !user || !password) {
-  throw new Error(
-    'Missing Neo4j connection settings. Please ensure VITE_NEO4J_ORGCHART_DB_URI, ' +
-    'VITE_NEO4J_ORGCHART_USERNAME, and VITE_NEO4J_ORGCHART_PASSWORD environment variables are set.'
-  );
-}
-
-const driver = Neo4j.driver(uri, Neo4j.auth.basic(user, password));
 
 // Function to fetch the dates from gazette_dates.txt
 const fetchGazetteDates = async () => {
@@ -37,7 +21,6 @@ const fetchGazetteDates = async () => {
 
 // Function to fetch data for a given date (called once for all dates)
 const fetchDataForAllDates = async (dates) => {
-  const session = driver.session();
   const allData = {};
 
   try {
@@ -49,38 +32,70 @@ const fetchDataForAllDates = async (dates) => {
         continue; // Move to the next date
       }
       
-      const result = await session.run(
-        `MATCH (g:government)-[r:HAS_MINISTER]->(m:minister)-[y:HAS_DEPARTMENT]->(d:department)
-        WHERE (r.start_date <= date("${selectedDate}") AND (r.end_date IS NULL OR r.end_date > date("${selectedDate}")))
-          AND (y.start_date <= date("${selectedDate}") AND (y.end_date IS NULL OR y.end_date > date("${selectedDate}")))
-        RETURN g, r, m, y, d`
-      );
-
-      const graph = { name: "Government", children: [] };
-      const ministersMap = new Map();
-
-      result.records.forEach((record) => {
-        const minister = record.get("m").properties.name;
-        const department = record.get("d").properties.name;
-
-        if (!ministersMap.has(minister)) {
-          ministersMap.set(minister, { name: minister, children: [] });
-          graph.children.push(ministersMap.get(minister));
+      // GraphQL Query
+      const query = `
+        query {
+          govStrucByDate(date: "${selectedDate}") {
+            name
+            ministers {
+              name
+              departments {
+                name
+              }
+            }
+          }
         }
-        ministersMap.get(minister).children.push({ name: department });
+      `;
+      
+      const response = await fetch("http://127.0.0.1:5000/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: query,
+        }),
       });
 
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+
+      if (!result.data || !result.data.govStrucByDate || result.data.govStrucByDate.length === 0) {
+        console.warn(`No data returned for date ${selectedDate}`);
+        allData[selectedDate] = null;
+        continue;
+      }
+
+      // Extract the government structure data
+      const govStructure = result.data.govStrucByDate[0];
+
+      const graph = { name: govStructure.name, children: [] };
+      const ministersMap = new Map();
+
+      govStructure.ministers.forEach((minister) => {
+        if (!ministersMap.has(minister.name)) {
+          ministersMap.set(minister.name, { name: minister.name, children: [] });
+          graph.children.push(ministersMap.get(minister.name));
+        }
+
+        minister.departments.forEach((department) => {
+          ministersMap.get(minister.name).children.push({ name: department.name });
+        });
+      });
+
+
       allData[selectedDate] = graph;
-      console.log(`App.jsx: Data fetched for ${selectedDate}`);
+      console.log(`Data fetched for ${selectedDate}`);
     }
 
     return allData;
   } catch (error) {
     console.error("Error fetching data:", error);
     return {};
-  } finally {
-    await session.close();
-  }
+  } 
 };
 
 const App = () => {
